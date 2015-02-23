@@ -29,7 +29,9 @@ TOKEN_MGR_DECLS:
 	static void	CommonTokenAction(Token t) {
 		try
 		{
-	            System.out.println(t.kind +" "+"\""+ t.image+"\"");
+FieldNames 	F = new FieldNames("MiniJavaParserConstants");
+System.out.println(t.beginLine+"."+t.beginColumn+"\"  "+F.get(t.kind)+"\" " + t.image);
+	     //      System.out.println(t.kind +" "+"\""+ t.image+"\"");
 		}
 		catch(Exception e) {
 			System.err.println("Filenotfound Error : \n" + e.toString());
