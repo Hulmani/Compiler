@@ -1,0 +1,283 @@
+options {
+	STATIC = true;
+	JAVA_UNICODE_ESCAPE = true;
+	IGNORE_CASE = true;
+	COMMON_TOKEN_ACTION = true;
+	ERROR_REPORTING = true;
+}
+
+PARSER_BEGIN(MiniJavaParser)
+	import		java.	io.*;
+
+	public class	MiniJavaParser {
+
+		static int	totalLines = 0;
+		static int	totalErrors = 0;
+
+
+protected void	token_error() {
+
+	System.out.println("Token Error ");
+}
+	}
+
+PARSER_END(MiniJavaParser)
+TOKEN_MGR_DECLS:
+{
+
+
+	static void	CommonTokenAction(Token t) {
+		try
+		{
+	            System.out.println(t.kind +" "+"\""+ t.image+"\"");
+		}
+		catch(Exception e) {
+			System.err.println("Filenotfound Error : \n" + e.toString());
+		}
+	}
+}
+
+		SKIP:{
+	" "
+	| "\t"
+	| "\r"
+	| <"//"(~["\n", "\r"]) * ("\n" | "\r" | "\r\n") >
+}
+SKIP:
+{
+	"\n"
+	{
+		MiniJavaParser.totalLines++;
+		//System.out.println("Token = " + image.toString() + " no: " + MiniJavaParser.totalLines);
+	}
+}
+SKIP : {
+"/*": IN_COMMENT }
+      
+// When any other character is seen in the IN_COMMENT state, skip it.
+
+< IN_COMMENT > SKIP : {
+<  ~[] > }
+      
+< IN_COMMENT > SKIP : {
+"*/": DEFAULT }
+
+
+TOKEN:{
+<SYMBOL:	
+		 "_" >
+}
+
+
+TOKEN:{
+	
+<#DIGIT: ["0"-"9"]>
+|<CLASS:"class" >
+|<PUBLIC: "public" >
+|<STATIC: "static" >
+|<VOID:	"void" >
+|<MAIN:	"main" >
+|<THIS:	"this" >
+|<INT:	"int" >
+|<STRING: "String" >
+|<EXTENDS:"extends" >
+|<SOP: "System.out.println" >
+|<LENGTH: "length" >
+|<RETURN: "return" >
+|<BOOLEAN: "boolean" >
+|<TRUE: "true" >
+|<FALSE: "false" >
+|<NEW: "new" >
+|<LEFTPARENTHESIS:	"(" >
+|<RIGHTPARENTHESIS:	")" >
+|<LEFTBRACE:	"{" >
+|<RIGHTBRACE:	"}" >
+|<LEFTBRACKET:	"[" >
+|<RIGHTBRACKET:	"]" >
+|<IF:		"if" >
+|<ELSE:	       "else" >
+|<WHILE:	"while" >
+|<DOT:		"." >
+|<COMMA:	"," >
+|<SEMICOLON:    ";" >
+|<NOT:    	"!" >
+|<IDENTIFIER:	(["a" - "z"] | <SYMBOL>)+ (["a" - "z"] | <DIGIT > |<SYMBOL >) * >
+|<INTEGER_LITERAL:(<DIGIT >)+ (<DIGIT>)*> 
+|<EQUAL:	"=" >
+|<#MINUS:	"-" >
+|<#PLUS:	"+" >
+|<#MULT:	"*" >
+|<#LT:		"<" >
+|<OP: 	<MINUS>|<PLUS>|"&&"|<MULT>|<LT> > 
+|<ILLEGAL: ~[ ] > 
+	{
+		MiniJavaParser.totalErrors++;
+	}
+}
+
+
+
+//Insert a specification of a lexical analysis here.
+
+
+// The following is a simple grammar that will allow you
+// to test the generated lexer.
+
+
+
+void
+Program():
+{}
+{
+	MainClass() (ClassDecl()) *
+	<EOF>
+}
+
+void
+MainClass():
+{}
+{
+
+	<CLASS> <IDENTIFIER> <LEFTBRACE> <PUBLIC><STATIC>
+	<VOID><MAIN> <LEFTPARENTHESIS><STRING><LEFTBRACKET><RIGHTBRACKET>
+	<IDENTIFIER><RIGHTPARENTHESIS>
+	<LEFTBRACE> 
+	Statement()
+	<RIGHTBRACE><RIGHTBRACE>
+}
+
+void
+ClassDecl():
+{}
+{
+	<CLASS> <IDENTIFIER><LEFTBRACE> 
+	(VarDecl())*
+	( MethodDecl())* 
+	<RIGHTBRACE>
+
+}
+
+void
+VarDecl():
+{}
+{
+Type() <IDENTIFIER> <SEMICOLON>
+}
+
+
+void
+MethodDecl():
+{}
+{
+	<PUBLIC> Type() <IDENTIFIER><LEFTPARENTHESIS> FormalList() <RIGHTPARENTHESIS> 
+	<LEFTBRACE>
+	(VarDecl())*
+	(Statement())*
+	<RETURN> Exp() <SEMICOLON> 	
+	<RIGHTBRACE>
+}
+
+void 
+FormalList():
+{}
+{
+(Type() <IDENTIFIER> (FormalRest())*) | {}
+}
+
+void 
+FormalRest():
+{}
+{
+	<COMMA> Type() <IDENTIFIER>
+
+}
+
+void 
+Type():
+{}
+{
+	PrimeType()
+|	ClassType()
+}
+
+void 
+PrimeType():
+{}
+{
+ <INT>(<LEFTBRACKET><RIGHTBRACKET>|{})
+|<BOOLEAN>
+}
+
+
+void 
+ClassType():
+{}
+{
+<IDENTIFIER>
+}
+
+void 
+Statement():
+{}
+{
+	<LEFTBRACE> (Statement())* <RIGHTBRACE>
+|	<IF> <LEFTPARENTHESIS> Exp() <RIGHTPARENTHESIS> Statement() <ELSE> Statement()
+|	<WHILE> Exp() Statement()
+|	<SOP> <LEFTPARENTHESIS> Exp() <RIGHTPARENTHESIS> <SEMICOLON>
+| 	<IDENTIFIER> ( <EQUAL> Exp()<SEMICOLON> | <LEFTBRACKET> Exp() <RIGHTBRACKET> <EQUAL> Exp() <SEMICOLON> )
+}
+
+void
+Exp():
+{}
+{
+	<TRUE> Term()
+|	<FALSE>Term()
+|	<INTEGER_LITERAL> Term()
+|	<IDENTIFIER> Term()
+|	<THIS>Term()
+|	<LEFTPARENTHESIS> Exp() <RIGHTPARENTHESIS>
+| 	<NEW> New()Term()
+|	<NOT>Exp()
+
+
+}
+
+void
+New():
+{}
+{
+(<INT> <LEFTBRACKET> Exp() <RIGHTBRACKET> ) | (<IDENTIFIER> <LEFTPARENTHESIS> <RIGHTPARENTHESIS>)
+}
+
+void
+Term():
+{}
+{
+	<OP> Exp() Term()
+|	<LEFTBRACKET> Exp() <RIGHTBRACKET> Term()
+|	<DOT> Dot() Term() 
+|	<SEMICOLON>
+|	{}
+
+}
+
+void Dot():
+{}
+{
+(<LENGTH> Term() | <IDENTIFIER><LEFTPARENTHESIS>ExpList()<RIGHTPARENTHESIS> Term())
+}
+
+void
+ExpList():
+{}
+{
+ 	Exp() (ExpRest())*  |	{}
+}
+
+void
+ExpRest():
+{}
+{
+<COMMA>Exp()
+}
